@@ -15,6 +15,7 @@ import {
   getCategorySummary,
 } from '../../db/repository';
 import { CategoryBadge } from '../../components/category-badge';
+import { ExportConfirmationModal } from '../../components/export-confirmation-modal';
 import { getMonthName } from '../../utils/date-helpers';
 import { formatCurrency } from '../../utils/format-currency';
 import { exportMonthToExcel } from '../../utils/export-excel';
@@ -31,6 +32,7 @@ export default function MonthDetailModal() {
   const [summary, setSummary] = useState<CS[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
@@ -57,12 +59,17 @@ export default function MonthDetailModal() {
     }
   }
 
-  async function handleExport() {
+  async function handleExportConfirm() {
     setExporting(true);
     try {
       await exportMonthToExcel(year, month, expenses, summary);
+      setShowExportModal(false);
     } catch {
-      Alert.alert('Error', 'No se pudo exportar el archivo');
+      setShowExportModal(false);
+      Alert.alert(
+        'Error al exportar',
+        'No se pudo generar o compartir el archivo Excel. Verifica que tengas espacio disponible e intenta de nuevo.'
+      );
     } finally {
       setExporting(false);
     }
@@ -87,12 +94,8 @@ export default function MonthDetailModal() {
         <Text style={styles.title}>
           {getMonthName(month)} {year}
         </Text>
-        <Pressable onPress={handleExport} disabled={exporting}>
-          <Ionicons
-            name="download-outline"
-            size={24}
-            color={exporting ? Colors.textMuted : Colors.primary}
-          />
+        <Pressable onPress={() => setShowExportModal(true)}>
+          <Ionicons name="download-outline" size={24} color={Colors.primary} />
         </Pressable>
       </View>
 
@@ -128,6 +131,17 @@ export default function MonthDetailModal() {
             </View>
           </View>
         )}
+      />
+
+      <ExportConfirmationModal
+        visible={showExportModal}
+        year={year}
+        month={month}
+        expenseCount={expenses.length}
+        total={total}
+        exporting={exporting}
+        onConfirm={handleExportConfirm}
+        onCancel={() => setShowExportModal(false)}
       />
     </View>
   );
