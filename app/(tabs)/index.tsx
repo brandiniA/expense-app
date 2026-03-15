@@ -38,6 +38,13 @@ export default function HomeScreen() {
     })
   );
 
+  function handlePress(expense: ExpenseWithCategory) {
+    router.push({
+      pathname: '/modal/expense-detail' as any,
+      params: { expenseId: expense.id },
+    });
+  }
+
   function handleLongPress(expense: ExpenseWithCategory) {
     Alert.alert(expense.name, '¿Qué deseas hacer?', [
       {
@@ -104,7 +111,7 @@ export default function HomeScreen() {
           sections={sections}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
-            <ExpenseListItem expense={item} onLongPress={handleLongPress} />
+            <ExpenseListItem expense={item} onPress={handlePress} onLongPress={handleLongPress} />
           )}
           renderSectionHeader={({ section }) => (
             <DaySeparator date={section.title} />
