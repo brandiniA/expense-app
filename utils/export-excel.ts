@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import * as FileSystem from 'expo-file-system';
+import { cacheDirectory, writeAsStringAsync, EncodingType } from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import type { ExpenseWithCategory, CategorySummary } from '../types';
 import { getMonthName } from './date-helpers';
@@ -37,19 +37,25 @@ export async function exportMonthToExcel(
 
   const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
 
-  const fileName = `Gastos_${monthName}_${year}.xlsx`;
-  const filePath = `${(FileSystem as any).cacheDirectory}${fileName}`;
+  if (!cacheDirectory) {
+    throw new Error('No se puede acceder al directorio de caché del dispositivo');
+  }
 
-  await FileSystem.writeAsStringAsync(filePath, wbout, {
-    encoding: 'base64' as any,
+  const fileName = `Gastos_${monthName}_${year}.xlsx`;
+  const filePath = `${cacheDirectory}${fileName}`;
+
+  await writeAsStringAsync(filePath, wbout, {
+    encoding: EncodingType.Base64,
   });
 
   const canShare = await Sharing.isAvailableAsync();
-  if (canShare) {
-    await Sharing.shareAsync(filePath, {
-      mimeType:
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      dialogTitle: `Gastos de ${monthName} ${year}`,
-    });
+  if (!canShare) {
+    throw new Error('Compartir archivos no está disponible en este dispositivo');
   }
+
+  await Sharing.shareAsync(filePath, {
+    mimeType:
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    dialogTitle: `Gastos de ${monthName} ${year}`,
+  });
 }
