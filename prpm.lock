@@ -483,5 +483,34 @@
       }
     }
   },
-  "generated": "2026-03-15T00:33:09.883Z"
+  "generated": "2026-03-15T00:33:58.497Z",
+  "collections": {
+    "superpowers": {
+      "name_slug": "superpowers",
+      "version": "1.0.0",
+      "installedAt": "2026-03-15T00:33:58.497Z",
+      "packages": [
+        "@obra/skill-using-superpowers",
+        "@obra/skill-brainstorming",
+        "@obra/skill-writing-plans",
+        "@obra/skill-executing-plans",
+        "@obra/skill-test-driven-development",
+        "@obra/skill-systematic-debugging",
+        "@obra/skill-requesting-code-review",
+        "@obra/skill-receiving-code-review",
+        "@obra/skill-verification-before-completion",
+        "@obra/skill-using-git-worktrees",
+        "@obra/skill-subagent-driven-development",
+        "@obra/skill-dispatching-parallel-agents",
+        "@obra/skill-root-cause-tracing",
+        "@obra/skill-defense-in-depth",
+        "@obra/skill-condition-based-waiting",
+        "@obra/skill-testing-anti-patterns",
+        "@obra/skill-testing-skills-with-subagents",
+        "@obra/skill-writing-skills",
+        "@obra/skill-sharing-skills",
+        "@obra/skill-finishing-a-development-branch"
+      ]
+    }
+  }
 }
