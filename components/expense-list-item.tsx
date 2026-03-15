@@ -6,13 +6,15 @@ import type { ExpenseWithCategory } from '../types';
 
 interface ExpenseListItemProps {
   expense: ExpenseWithCategory;
+  onPress?: (expense: ExpenseWithCategory) => void;
   onLongPress?: (expense: ExpenseWithCategory) => void;
 }
 
-export function ExpenseListItem({ expense, onLongPress }: ExpenseListItemProps) {
+export function ExpenseListItem({ expense, onPress, onLongPress }: ExpenseListItemProps) {
   return (
     <Pressable
       style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+      onPress={() => onPress?.(expense)}
       onLongPress={() => onLongPress?.(expense)}
       delayLongPress={500}
     >
