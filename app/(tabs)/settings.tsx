@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function HomeScreen() {
+export default function SettingsScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Inicio - Coming Soon</Text>
+      <Text style={styles.text}>Configuración - Coming Soon</Text>
     </View>
   );
 }
