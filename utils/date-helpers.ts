@@ -79,3 +79,26 @@ export function groupExpensesByDate<T extends { date: string }>(
   }
   return groups;
 }
+
+export function formatFullDate(dateString: string): string {
+  const date = new Date(dateString + 'T12:00:00');
+  const day = date.getDate();
+  const months = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+  ];
+  const year = date.getFullYear();
+  return `${day} de ${months[date.getMonth()]} de ${year}`;
+}
+
+export function formatCreatedAt(isoString: string): string {
+  const date = new Date(isoString);
+  const day = date.getDate();
+  const months = [
+    'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  ];
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `Registrado el ${day} ${months[date.getMonth()]} ${date.getFullYear()} a las ${hours}:${minutes}`;
+}
