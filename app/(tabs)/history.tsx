@@ -38,7 +38,7 @@ export default function HistoryScreen() {
 
   function handleMonthPress(item: MonthSummary) {
     router.push({
-      pathname: '/modal/month-detail',
+      pathname: '/modal/month-detail' as any,
       params: { year: item.year, month: item.month_number },
     });
   }

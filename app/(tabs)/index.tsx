@@ -44,7 +44,7 @@ export default function HomeScreen() {
         text: 'Editar',
         onPress: () =>
           router.push({
-            pathname: '/modal/add-expense',
+            pathname: '/modal/add-expense' as any,
             params: { expenseId: expense.id },
           }),
       },
@@ -113,7 +113,7 @@ export default function HomeScreen() {
         />
       )}
 
-      <FabButton onPress={() => router.push('/modal/add-expense')} />
+      <FabButton onPress={() => router.push('/modal/add-expense' as any)} />
     </View>
   );
 }

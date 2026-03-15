@@ -38,10 +38,10 @@ export async function exportMonthToExcel(
   const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
 
   const fileName = `Gastos_${monthName}_${year}.xlsx`;
-  const filePath = `${FileSystem.cacheDirectory}${fileName}`;
+  const filePath = `${FileSystem.documentDirectory}${fileName}`;
 
   await FileSystem.writeAsStringAsync(filePath, wbout, {
-    encoding: FileSystem.EncodingType.Base64,
+    encoding: 'base64' as any,
   });
 
   const canShare = await Sharing.isAvailableAsync();

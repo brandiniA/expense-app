@@ -28,7 +28,7 @@ export default function SettingsScreen() {
 
   function handleEditCategory(cat: Category) {
     router.push({
-      pathname: '/modal/add-category',
+      pathname: '/modal/add-category' as any,
       params: { categoryId: cat.id },
     });
   }
@@ -64,7 +64,7 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Etiquetas</Text>
         <Pressable
           style={styles.addButton}
-          onPress={() => router.push('/modal/add-category')}
+          onPress={() => router.push('/modal/add-category' as any)}
         >
           <Ionicons name="add-circle" size={28} color={Colors.primary} />
         </Pressable>
