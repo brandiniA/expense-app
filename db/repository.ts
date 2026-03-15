@@ -1,7 +1,6 @@
-import { getDatabase } from './database';
+import { supabase } from './supabase';
 import type {
   Category,
-  Expense,
   ExpenseWithCategory,
   CategorySummary,
   MonthSummary,
@@ -10,20 +9,25 @@ import type {
 // === CATEGORIES ===
 
 export async function getAllCategories(): Promise<Category[]> {
-  const db = await getDatabase();
-  const rows = await db.getAllAsync<Category>(
-    'SELECT * FROM categories ORDER BY is_default DESC, name ASC'
-  );
-  return rows.map((r) => ({ ...r, is_default: Boolean(r.is_default) }));
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .order('is_default', { ascending: false })
+    .order('name', { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function getCategoryById(id: number): Promise<Category | null> {
-  const db = await getDatabase();
-  const row = await db.getFirstAsync<Category>(
-    'SELECT * FROM categories WHERE id = ?',
-    [id]
-  );
-  return row ? { ...row, is_default: Boolean(row.is_default) } : null;
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) return null;
+  return data;
 }
 
 export async function addCategory(
@@ -31,12 +35,14 @@ export async function addCategory(
   color: string,
   icon: string
 ): Promise<number> {
-  const db = await getDatabase();
-  const result = await db.runAsync(
-    'INSERT INTO categories (name, color, icon, is_default) VALUES (?, ?, ?, 0)',
-    [name, color, icon]
-  );
-  return result.lastInsertRowId;
+  const { data, error } = await supabase
+    .from('categories')
+    .insert({ name, color, icon, is_default: false })
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data.id;
 }
 
 export async function updateCategory(
@@ -45,18 +51,22 @@ export async function updateCategory(
   color: string,
   icon: string
 ): Promise<void> {
-  const db = await getDatabase();
-  await db.runAsync(
-    'UPDATE categories SET name = ?, color = ?, icon = ? WHERE id = ?',
-    [name, color, icon, id]
-  );
+  const { error } = await supabase
+    .from('categories')
+    .update({ name, color, icon })
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
 export async function deleteCategory(id: number): Promise<void> {
-  const db = await getDatabase();
-  await db.runAsync('DELETE FROM categories WHERE id = ? AND is_default = 0', [
-    id,
-  ]);
+  const { error } = await supabase
+    .from('categories')
+    .delete()
+    .eq('id', id)
+    .eq('is_default', false);
+
+  if (error) throw error;
 }
 
 // === EXPENSES ===
@@ -68,12 +78,14 @@ export async function addExpense(
   date: string,
   notes: string | null
 ): Promise<number> {
-  const db = await getDatabase();
-  const result = await db.runAsync(
-    'INSERT INTO expenses (name, amount, category_id, date, notes) VALUES (?, ?, ?, ?, ?)',
-    [name, amount, categoryId, date, notes]
-  );
-  return result.lastInsertRowId;
+  const { data, error } = await supabase
+    .from('expenses')
+    .insert({ name, amount, category_id: categoryId, date, notes })
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data.id;
 }
 
 export async function updateExpense(
@@ -84,31 +96,56 @@ export async function updateExpense(
   date: string,
   notes: string | null
 ): Promise<void> {
-  const db = await getDatabase();
-  await db.runAsync(
-    'UPDATE expenses SET name = ?, amount = ?, category_id = ?, date = ?, notes = ? WHERE id = ?',
-    [name, amount, categoryId, date, notes, id]
-  );
+  const { error } = await supabase
+    .from('expenses')
+    .update({ name, amount, category_id: categoryId, date, notes })
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
 export async function deleteExpense(id: number): Promise<void> {
-  const db = await getDatabase();
-  await db.runAsync('DELETE FROM expenses WHERE id = ?', [id]);
+  const { error } = await supabase
+    .from('expenses')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 }
 
 export async function getExpensesByDateRange(
   startDate: string,
   endDate: string
 ): Promise<ExpenseWithCategory[]> {
-  const db = await getDatabase();
-  return db.getAllAsync<ExpenseWithCategory>(
-    `SELECT e.*, c.name as category_name, c.color as category_color, c.icon as category_icon
-     FROM expenses e
-     JOIN categories c ON e.category_id = c.id
-     WHERE e.date >= ? AND e.date <= ?
-     ORDER BY e.date DESC, e.created_at DESC`,
-    [startDate, endDate]
-  );
+  const { data, error } = await supabase
+    .from('expenses')
+    .select(`
+      *,
+      categories!inner (
+        name,
+        color,
+        icon
+      )
+    `)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    name: row.name,
+    amount: Number(row.amount),
+    category_id: row.category_id,
+    date: row.date,
+    notes: row.notes,
+    created_at: row.created_at,
+    category_name: row.categories.name,
+    category_color: row.categories.color,
+    category_icon: row.categories.icon,
+  }));
 }
 
 export async function getExpensesForCurrentMonth(): Promise<
@@ -126,30 +163,53 @@ export async function getCategorySummary(
   startDate: string,
   endDate: string
 ): Promise<CategorySummary[]> {
-  const db = await getDatabase();
-  const rows = await db.getAllAsync<{
+  const { data, error } = await supabase
+    .from('expenses')
+    .select(`
+      amount,
+      category_id,
+      categories!inner (
+        id,
+        name,
+        color,
+        icon
+      )
+    `)
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  if (error) throw error;
+
+  const grouped = new Map<number, {
     category_id: number;
     category_name: string;
     category_color: string;
     category_icon: string;
     total: number;
     count: number;
-  }>(
-    `SELECT
-      c.id as category_id,
-      c.name as category_name,
-      c.color as category_color,
-      c.icon as category_icon,
-      COALESCE(SUM(e.amount), 0) as total,
-      COUNT(e.id) as count
-    FROM expenses e
-    JOIN categories c ON e.category_id = c.id
-    WHERE e.date >= ? AND e.date <= ?
-    GROUP BY c.id
-    ORDER BY total DESC`,
-    [startDate, endDate]
-  );
+  }>();
 
+  for (const row of data ?? []) {
+    const cat = (row as any).categories;
+    const catId = cat.id;
+    const existing = grouped.get(catId);
+
+    if (existing) {
+      existing.total += Number(row.amount);
+      existing.count += 1;
+    } else {
+      grouped.set(catId, {
+        category_id: catId,
+        category_name: cat.name,
+        category_color: cat.color,
+        category_icon: cat.icon,
+        total: Number(row.amount),
+        count: 1,
+      });
+    }
+  }
+
+  const rows = Array.from(grouped.values()).sort((a, b) => b.total - a.total);
   const grandTotal = rows.reduce((sum, r) => sum + r.total, 0);
 
   return rows.map((r) => ({
@@ -162,26 +222,49 @@ export async function getTotalForDateRange(
   startDate: string,
   endDate: string
 ): Promise<number> {
-  const db = await getDatabase();
-  const result = await db.getFirstAsync<{ total: number }>(
-    'SELECT COALESCE(SUM(amount), 0) as total FROM expenses WHERE date >= ? AND date <= ?',
-    [startDate, endDate]
-  );
-  return result?.total ?? 0;
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('amount')
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  if (error) throw error;
+  return (data ?? []).reduce((sum, row) => sum + Number(row.amount), 0);
 }
 
 export async function getMonthsList(): Promise<MonthSummary[]> {
-  const db = await getDatabase();
-  return db.getAllAsync<MonthSummary>(
-    `SELECT
-      strftime('%Y-%m', date) as month,
-      CAST(strftime('%Y', date) AS INTEGER) as year,
-      CAST(strftime('%m', date) AS INTEGER) as month_number,
-      SUM(amount) as total,
-      COUNT(*) as expense_count
-    FROM expenses
-    GROUP BY strftime('%Y-%m', date)
-    ORDER BY month DESC`
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('date, amount')
+    .order('date', { ascending: false });
+
+  if (error) throw error;
+
+  const grouped = new Map<string, MonthSummary>();
+
+  for (const row of data ?? []) {
+    const d = new Date(row.date + 'T12:00:00');
+    const year = d.getFullYear();
+    const monthNum = d.getMonth() + 1;
+    const key = `${year}-${String(monthNum).padStart(2, '0')}`;
+
+    const existing = grouped.get(key);
+    if (existing) {
+      existing.total += Number(row.amount);
+      existing.expense_count += 1;
+    } else {
+      grouped.set(key, {
+        month: key,
+        year,
+        month_number: monthNum,
+        total: Number(row.amount),
+        expense_count: 1,
+      });
+    }
+  }
+
+  return Array.from(grouped.values()).sort((a, b) =>
+    b.month.localeCompare(a.month)
   );
 }
 
