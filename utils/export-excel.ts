@@ -38,7 +38,7 @@ export async function exportMonthToExcel(
   const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
 
   const fileName = `Gastos_${monthName}_${year}.xlsx`;
-  const filePath = `${FileSystem.documentDirectory}${fileName}`;
+  const filePath = `${(FileSystem as any).cacheDirectory}${fileName}`;
 
   await FileSystem.writeAsStringAsync(filePath, wbout, {
     encoding: 'base64' as any,
