@@ -113,6 +113,39 @@ export async function deleteExpense(id: number): Promise<void> {
   if (error) throw error;
 }
 
+export async function getExpenseById(
+  id: number
+): Promise<ExpenseWithCategory | null> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select(`
+      *,
+      categories!inner (
+        name,
+        color,
+        icon
+      )
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error) return null;
+
+  const row = data as any;
+  return {
+    id: row.id,
+    name: row.name,
+    amount: Number(row.amount),
+    category_id: row.category_id,
+    date: row.date,
+    notes: row.notes,
+    created_at: row.created_at,
+    category_name: row.categories.name,
+    category_color: row.categories.color,
+    category_icon: row.categories.icon,
+  };
+}
+
 export async function getExpensesByDateRange(
   startDate: string,
   endDate: string
