@@ -89,10 +89,7 @@ export function ExportConfirmationModal({
               {exporting ? (
                 <ActivityIndicator size="small" color={Colors.white} />
               ) : (
-                <>
-                  <Ionicons name="share-outline" size={18} color={Colors.white} />
-                  <Text style={styles.confirmText}>Exportar y compartir</Text>
-                </>
+                <Ionicons name="download-outline" size={24} color={Colors.white} />
               )}
             </Pressable>
           </View>
@@ -190,7 +187,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.lg,
-    gap: Spacing.xs,
   },
   cancelButton: {
     backgroundColor: Colors.surface,
@@ -202,10 +198,5 @@ const styles = StyleSheet.create({
     fontSize: FontSize.sm,
     fontWeight: '600',
     color: Colors.textSecondary,
-  },
-  confirmText: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    color: Colors.white,
   },
 });
